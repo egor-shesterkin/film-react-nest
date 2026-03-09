@@ -8,7 +8,7 @@ export const configProvider = {
       url: process.env.DATABASE_URL ?? 'mongodb://localhost:27017/film',
     },
     serveStatic: {
-      rootPath: path.join(__dirname, '..', process.env.SERVE_STATIC_ROOT ?? 'public'),
+      rootPath: path.join(__dirname, '..', process.env.SERVE_STATIC_ROOT ?? 'public/content/afisha'),
       serveRoot: process.env.SERVE_STATIC_PATH ?? '/content/afisha',
     },
   }),
