@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -5,8 +6,12 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 
 import { AppConfig } from './app.config.provider';
 import { AppConfigModule } from './app.config.module';
+import { TypeormConfigModule } from './database/typeorm-config.module';
 import { FilmsModule } from './films/films.module';
 import { OrderModule } from './order/order.module';
+
+const databaseDriver = process.env.DATABASE_DRIVER ?? 'mongodb';
+const isPostgres = databaseDriver === 'postgres';
 
 @Module({
   imports: [
@@ -15,13 +20,17 @@ import { OrderModule } from './order/order.module';
       cache: true,
     }),
     AppConfigModule,
-    MongooseModule.forRootAsync({
-      imports: [AppConfigModule],
-      useFactory: (config: AppConfig) => ({
-        uri: config.database.url,
-      }),
-      inject: ['CONFIG'],
-    }),
+    ...(isPostgres
+      ? [TypeormConfigModule]
+      : [
+          MongooseModule.forRootAsync({
+            imports: [AppConfigModule],
+            useFactory: (config: AppConfig) => ({
+              uri: config.database.url,
+            }),
+            inject: ['CONFIG'],
+          }),
+        ]),
     ServeStaticModule.forRootAsync({
       imports: [AppConfigModule],
       useFactory: (config: AppConfig) => [
