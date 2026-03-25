@@ -1,18 +1,30 @@
-import {ConfigModule} from "@nestjs/config";
+import * as path from 'node:path';
 
 export const configProvider = {
-    imports: [ConfigModule.forRoot()],
-    provide: 'CONFIG',
-    useValue: < AppConfig> {
-        //TODO прочесть переменнные среды
+  provide: 'CONFIG',
+  useFactory: (): AppConfig => ({
+    database: {
+      driver: process.env.DATABASE_DRIVER ?? 'mongodb',
+      url: process.env.DATABASE_URL ?? 'mongodb://localhost:27017/film',
     },
-}
+    serveStatic: {
+      rootPath: path.join(__dirname, '..', process.env.SERVE_STATIC_ROOT ?? 'public/content/afisha'),
+      serveRoot: process.env.SERVE_STATIC_PATH ?? '/content/afisha',
+    },
+  }),
+};
 
 export interface AppConfig {
-    database: AppConfigDatabase
+  database: AppConfigDatabase;
+  serveStatic: AppConfigServeStatic;
 }
 
 export interface AppConfigDatabase {
-    driver: string
-    url: string
+  driver: string;
+  url: string;
+}
+
+export interface AppConfigServeStatic {
+  rootPath: string;
+  serveRoot: string;
 }
