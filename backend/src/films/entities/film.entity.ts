@@ -1,35 +1,35 @@
-import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { ScheduleEntity } from './schedule.entity';
 
 @Entity({ name: 'films' })
 export class FilmEntity {
-  @PrimaryColumn({ type: 'uuid' })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'real', nullable: true })
-  rating?: number;
+  @Column({ type: 'real' })
+  rating: number;
 
-  @Column({ type: 'varchar', nullable: true })
-  director?: string;
+  @Column({ type: 'varchar' })
+  director: string;
 
   @Column({ type: 'text', array: true, default: () => "'{}'" })
-  tags?: string[];
+  tags: string[];
 
-  @Column({ type: 'varchar', nullable: true })
-  title?: string;
+  @Column({ type: 'varchar' })
+  title: string;
 
-  @Column({ type: 'text', nullable: true })
-  about?: string;
+  @Column({ type: 'text' })
+  about: string;
 
-  @Column({ type: 'text', nullable: true })
-  description?: string;
+  @Column({ type: 'text' })
+  description: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  image?: string;
+  @Column({ type: 'varchar' })
+  image: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  cover?: string;
+  @Column({ type: 'varchar' })
+  cover: string;
 
   @OneToMany(() => ScheduleEntity, (schedule) => schedule.film)
-  schedule?: ScheduleEntity[];
+  schedules?: ScheduleEntity[];
 }

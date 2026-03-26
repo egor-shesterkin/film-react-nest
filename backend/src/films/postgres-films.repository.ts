@@ -32,10 +32,11 @@ export class PostgresFilmsRepository extends FilmsRepository {
       return null;
     }
 
-    const schedule = await this.scheduleRepository.find({
-      where: { filmId: id },
-      order: { daytime: 'ASC' },
-    });
+    const schedule = await this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .where('schedule.film_id = :filmId', { filmId: id })
+      .orderBy('schedule.daytime', 'ASC')
+      .getMany();
 
     return toFilmScheduleResponseDto(schedule);
   }
@@ -44,10 +45,11 @@ export class PostgresFilmsRepository extends FilmsRepository {
     filmId: string,
     sessionId: string,
   ): Promise<{ session: ScheduleSession } | null> {
-    const session = await this.scheduleRepository.findOneBy({
-      id: sessionId,
-      filmId,
-    });
+    const session = await this.scheduleRepository
+      .createQueryBuilder('schedule')
+      .where('schedule.id = :sessionId', { sessionId })
+      .andWhere('schedule.film_id = :filmId', { filmId })
+      .getOne();
     if (!session) {
       return null;
     }
@@ -57,7 +59,7 @@ export class PostgresFilmsRepository extends FilmsRepository {
         id: session.id,
         rows: session.rows,
         seats: session.seats,
-        daytime: session.daytime,
+        daytime: session.daytime.toISOString(),
         hall: session.hall,
         price: session.price,
         taken: session.taken ?? [],
@@ -76,7 +78,7 @@ export class PostgresFilmsRepository extends FilmsRepository {
         .createQueryBuilder('schedule')
         .setLock('pessimistic_write')
         .where('schedule.id = :sessionId', { sessionId })
-        .andWhere('schedule.filmId = :filmId', { filmId })
+        .andWhere('schedule.film_id = :filmId', { filmId })
         .getOne();
 
       if (!lockedSession) {

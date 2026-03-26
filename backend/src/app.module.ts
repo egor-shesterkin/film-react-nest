@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 
@@ -10,9 +11,6 @@ import { TypeormConfigModule } from './database/typeorm-config.module';
 import { FilmsModule } from './films/films.module';
 import { OrderModule } from './order/order.module';
 
-const databaseDriver = process.env.DATABASE_DRIVER ?? 'mongodb';
-const isPostgres = databaseDriver === 'postgres';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,17 +18,27 @@ const isPostgres = databaseDriver === 'postgres';
       cache: true,
     }),
     AppConfigModule,
-    ...(isPostgres
-      ? [TypeormConfigModule]
-      : [
-          MongooseModule.forRootAsync({
-            imports: [AppConfigModule],
-            useFactory: (config: AppConfig) => ({
-              uri: config.database.url,
-            }),
-            inject: ['CONFIG'],
-          }),
-        ]),
+    TypeormConfigModule,
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule, AppConfigModule],
+      useFactory: (config: AppConfig, configService: ConfigService) => {
+        const databaseDriver =
+          configService.get<string>('DATABASE_DRIVER') ??
+          config.database.driver;
+
+        if (databaseDriver === 'mongodb') {
+          return {
+            uri: config.database.url,
+          };
+        }
+
+        return {
+          uri: 'mongodb://127.0.0.1:27017/film_disabled',
+          lazyConnection: true,
+        };
+      },
+      inject: ['CONFIG', ConfigService],
+    }),
     ServeStaticModule.forRootAsync({
       imports: [AppConfigModule],
       useFactory: (config: AppConfig) => [
@@ -41,7 +49,7 @@ const isPostgres = databaseDriver === 'postgres';
       ],
       inject: ['CONFIG'],
     }),
-    FilmsModule,
+    FilmsModule.register(),
     OrderModule,
   ],
   controllers: [],
