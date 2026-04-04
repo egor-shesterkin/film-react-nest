@@ -1,17 +1,29 @@
 import * as path from 'node:path';
+import { ConfigService } from '@nestjs/config';
 
 export const configProvider = {
   provide: 'CONFIG',
-  useFactory: (): AppConfig => ({
-    database: {
-      driver: process.env.DATABASE_DRIVER ?? 'mongodb',
-      url: process.env.DATABASE_URL ?? 'mongodb://localhost:27017/film',
-    },
-    serveStatic: {
-      rootPath: path.join(__dirname, '..', process.env.SERVE_STATIC_ROOT ?? 'public/content/afisha'),
-      serveRoot: process.env.SERVE_STATIC_PATH ?? '/content/afisha',
-    },
-  }),
+  useFactory: (configService: ConfigService): AppConfig => {
+    const serveStaticRoot =
+      configService.get<string>('SERVE_STATIC_ROOT') ?? 'public/content/afisha';
+
+    return {
+      database: {
+        driver: configService.get<string>('DATABASE_DRIVER') ?? 'mongodb',
+        url:
+          configService.get<string>('DATABASE_URL') ??
+          'mongodb://localhost:27017/film',
+        username: configService.get<string>('DATABASE_USERNAME') ?? 'postgres',
+        password: configService.get<string>('DATABASE_PASSWORD') ?? 'postgres',
+      },
+      serveStatic: {
+        rootPath: path.join(__dirname, '..', serveStaticRoot),
+        serveRoot:
+          configService.get<string>('SERVE_STATIC_PATH') ?? '/content/afisha',
+      },
+    };
+  },
+  inject: [ConfigService],
 };
 
 export interface AppConfig {
@@ -22,6 +34,8 @@ export interface AppConfig {
 export interface AppConfigDatabase {
   driver: string;
   url: string;
+  username: string;
+  password: string;
 }
 
 export interface AppConfigServeStatic {

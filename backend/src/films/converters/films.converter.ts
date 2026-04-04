@@ -17,13 +17,21 @@ export interface FilmEntity {
   cover?: string;
   schedule?: Array<{
     id: string;
-    daytime?: string;
+    daytime?: string | Date;
     hall?: string | number;
     rows?: number;
     seats?: number;
     price?: number;
     taken?: string[];
   }>;
+}
+
+function serializeDaytime(daytime?: string | Date): string | undefined {
+  if (!daytime) {
+    return undefined;
+  }
+
+  return daytime instanceof Date ? daytime.toISOString() : daytime;
 }
 
 export function toFilmDto(entity: FilmEntity): FilmDto {
@@ -42,7 +50,7 @@ export function toFilmDto(entity: FilmEntity): FilmDto {
 
 export function toFilmScheduleDto(scheduleItem: {
   id: string;
-  daytime?: string;
+  daytime?: string | Date;
   hall?: string | number;
   rows?: number;
   seats?: number;
@@ -51,7 +59,7 @@ export function toFilmScheduleDto(scheduleItem: {
 }): FilmScheduleDto {
   return {
     id: scheduleItem.id,
-    daytime: scheduleItem.daytime,
+    daytime: serializeDaytime(scheduleItem.daytime),
     hall: scheduleItem.hall != null ? String(scheduleItem.hall) : undefined,
     rows: scheduleItem.rows,
     seats: scheduleItem.seats,
@@ -72,7 +80,7 @@ export function toFilmsListResponseDto(
 export function toFilmScheduleResponseDto(
   schedule: Array<{
     id: string;
-    daytime?: string;
+    daytime?: string | Date;
     hall?: string | number;
     rows?: number;
     seats?: number;

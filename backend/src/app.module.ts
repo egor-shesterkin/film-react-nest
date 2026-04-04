@@ -1,10 +1,13 @@
+import 'dotenv/config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ServeStaticModule } from '@nestjs/serve-static';
 
 import { AppConfig } from './app.config.provider';
 import { AppConfigModule } from './app.config.module';
+import { TypeormConfigModule } from './database/typeorm-config.module';
 import { FilmsModule } from './films/films.module';
 import { OrderModule } from './order/order.module';
 
@@ -15,12 +18,26 @@ import { OrderModule } from './order/order.module';
       cache: true,
     }),
     AppConfigModule,
+    TypeormConfigModule,
     MongooseModule.forRootAsync({
-      imports: [AppConfigModule],
-      useFactory: (config: AppConfig) => ({
-        uri: config.database.url,
-      }),
-      inject: ['CONFIG'],
+      imports: [ConfigModule, AppConfigModule],
+      useFactory: (config: AppConfig, configService: ConfigService) => {
+        const databaseDriver =
+          configService.get<string>('DATABASE_DRIVER') ??
+          config.database.driver;
+
+        if (databaseDriver === 'mongodb') {
+          return {
+            uri: config.database.url,
+          };
+        }
+
+        return {
+          uri: 'mongodb://127.0.0.1:27017/film_disabled',
+          lazyConnection: true,
+        };
+      },
+      inject: ['CONFIG', ConfigService],
     }),
     ServeStaticModule.forRootAsync({
       imports: [AppConfigModule],
@@ -32,7 +49,7 @@ import { OrderModule } from './order/order.module';
       ],
       inject: ['CONFIG'],
     }),
-    FilmsModule,
+    FilmsModule.register(),
     OrderModule,
   ],
   controllers: [],
