@@ -12,7 +12,9 @@ export interface ScheduleSession {
 
 export abstract class FilmsRepository {
   abstract findAll(): Promise<FilmsListResponseDto>;
-  abstract findScheduleById(id: string): Promise<FilmScheduleResponseDto | null>;
+  abstract findScheduleById(
+    id: string,
+  ): Promise<FilmScheduleResponseDto | null>;
   abstract findFilmWithSession(
     filmId: string,
     sessionId: string,

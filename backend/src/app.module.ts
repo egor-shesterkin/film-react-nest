@@ -32,8 +32,12 @@ import { OrderModule } from './order/order.module';
           };
         }
 
+        const mongodbFallbackUri =
+          configService.get<string>('MONGODB_FALLBACK_URL') ??
+          'mongodb://mongodb:27017/film_disabled';
+
         return {
-          uri: 'mongodb://127.0.0.1:27017/film_disabled',
+          uri: mongodbFallbackUri,
           lazyConnection: true,
         };
       },
