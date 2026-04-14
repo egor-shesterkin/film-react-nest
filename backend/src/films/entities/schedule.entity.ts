@@ -12,7 +12,9 @@ export class ScheduleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => FilmEntity, (film) => film.schedules, { onDelete: 'CASCADE' })
+  @ManyToOne(() => FilmEntity, (film) => film.schedules, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'film_id', referencedColumnName: 'id' })
   film: FilmEntity;
 
