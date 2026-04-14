@@ -36,8 +36,11 @@ services:
         condition: service_started
     ports:
       - "${FRONTEND_PORT}:80"
+      - "${FRONTEND_HTTPS_PORT}:443"
     volumes:
       - frontend_dist:/usr/share/nginx/html:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
     restart: unless-stopped
     networks:
       - app-network
@@ -79,6 +82,15 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: unless-stopped
+    networks:
+      - app-network
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www:/var/www/certbot:rw
+      - ./certbot/conf:/etc/letsencrypt:rw
+    restart: "no"
     networks:
       - app-network
 

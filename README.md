@@ -104,6 +104,29 @@ MongoDB должна быть установлена и запущена.
 
 `docker pull ghcr.io/<owner>/<repo>/backend:latest`
 
+## Автодеплой через GitHub Actions
+
+В репозитории настроен второй workflow `.github/workflows/deploy.yml`.
+
+Как это работает:
+
+* `docker-images.yml` собирает и публикует образы в GHCR.
+* `deploy.yml` запускается после успешного завершения сборки и по SSH обновляет контейнеры на сервере.
+
+`deploy.yml` автоматически деплоит ветки:
+
+* `main`
+* `review-*`
+
+Также поддерживается ручной запуск (`workflow_dispatch`) с выбором `image_tag`.
+
+Перед использованием добавьте Secrets в GitHub Repository Settings -> Secrets and variables -> Actions:
+
+* `DEPLOY_HOST` — IP/домен сервера (например `213.165.219.199`)
+* `DEPLOY_USER` — SSH-пользователь на сервере
+* `DEPLOY_SSH_KEY` — приватный SSH-ключ (в формате PEM/OpenSSH)
+* `DEPLOY_PATH` — путь до директории деплоя на сервере (например `~/film-deploy`)
+
 ## Деплой на удалённый сервер
 
 Ниже — минимальный сценарий деплоя на сервер `213.165.219.199` без build context (только запуск образов из GHCR).
@@ -145,6 +168,16 @@ MongoDB должна быть установлена и запущена.
 
 ### 5) Запуск
 
+Создайте директории для сертификатов:
+
+`mkdir -p certbot/www certbot/conf`
+
+Для первичной выдачи сертификата используйте certbot в standalone-режиме:
+
+`docker compose run --rm --service-ports certbot certonly --standalone --preferred-challenges http -d egorfilm.nomorepartiessite.ru -d api.egorfilm.nomorepartiessite.ru --agree-tos -m <your-email> --no-eff-email`
+
+После успешной выдачи сертификата запустите проект:
+
 `docker compose up -d`
 
 ### 6) Проверка
@@ -153,9 +186,24 @@ MongoDB должна быть установлена и запущена.
 
 Проверьте в браузере:
 
-* `http://egorfilm.nomorepartiessite.ru`
-* `http://api.egorfilm.nomorepartiessite.ru/api/afisha/films`
+* `https://egorfilm.nomorepartiessite.ru`
+* `https://api.egorfilm.nomorepartiessite.ru/api/afisha/films`
 * `http://egorfilm.nomorepartiessite.ru:8080` (pgAdmin)
+
+Проверка редиректа:
+
+* `http://egorfilm.nomorepartiessite.ru` -> `https://egorfilm.nomorepartiessite.ru`
+* `http://api.egorfilm.nomorepartiessite.ru` -> `https://api.egorfilm.nomorepartiessite.ru`
+
+### 7) Продление сертификата
+
+Ручное продление:
+
+`docker compose run --rm --service-ports certbot renew --standalone`
+
+Автоматическое продление (cron, ежедневно в 03:00):
+
+`0 3 * * * cd /home/<user>/film-deploy && docker compose run --rm --service-ports certbot renew --standalone && docker compose exec frontend nginx -s reload`
 
 
 
